@@ -1,7 +1,7 @@
 # Reproducible Research: Peer Assessment 1
 
 
-## Loading and preprocessing the data
+## Loading and preprocessing the data, including dependent packages
 
 ```r
 library(ggplot2);
@@ -9,14 +9,14 @@ library(plyr);
 #Read activity file
 activity <- read.csv("./activity.csv");activity <- read.csv("./activity.csv");
 #Activity_withoutNA has no NA records
-activity_withoutNA <- na.omit(activity,cols=("steps"));
+activity_wtna <- na.omit(activity,cols=("steps"));
 ```
   
 ## What is mean total number of steps taken per day?  
   
 
 ```r
-dsteps <- ddply(activity_withoutNA, .(date), summarize, steps=sum(steps));
+dsteps <- ddply(activity_wtna, .(date), summarize, steps=sum(steps));
 hist(dsteps$steps,main="Histogram of total steps per day",xlab="Steps per day");
 ```
 
@@ -35,7 +35,7 @@ The median when ignoring NA records  is 10765
 
 ```r
 #Summarize data
-isteps <- ddply(activity_withoutNA, .(interval), summarize, msteps=mean(steps,na.rm=TRUE));
+isteps <- ddply(activity_wtna, .(interval), summarize, msteps=mean(steps,na.rm=TRUE));
 #Plot time series
 plot(isteps$interval,isteps$msteps,type="l",xlab="Interval",ylab="Steps",main="Steps by interval");
 ```
@@ -50,6 +50,11 @@ minterval <- isteps[isteps$msteps == max(isteps$msteps,na.rm=TRUE),];
 The maximum interval is `r minterval'.
 
 ## Imputing missing values
+
+The code below use data frame merge to populate a msteps colum.
+The msteps (mean of steps for interval i) column populates the steps column if
+its value is NA.  
+  
 
 ```r
 # Count of NA values
@@ -90,3 +95,40 @@ The median with backfill of NA data  is 10766.19
 After backfill, the mean stays the same and the median increases slightly.
   
 ## Are there differences in activity patterns between weekdays and weekends?
+
+The code below use the qplot function of the ggplot2 package.
+
+I use the $day property of the POSIXlt object to test if the day is a Sunday (0) or a Saturday (6) and generate a factor column added to the activity dataframe.
+
+
+```r
+# Create a boolean vector - TRUE means this is a week end
+Wend <-  (as.POSIXlt(activity_backfill$date)$wday == 0 ) |  
+  (as.POSIXlt(activity_backfill$date)$wday == 6 );
+
+Wend <- as.data.frame(Wend);
+
+#This function turn the boolen into either weekend or weekday
+Wdayend <- function(x) {
+  if (x == TRUE) {return ("weekend")}
+  else 
+  { return("weekday")}
+}
+
+#A column is added & converted into a factor
+activity_backfill$Wend <- apply(Wend,1,Wdayend);
+activity_backfill$Wend <- as.factor(activity_backfill$Wend);
+
+#Summarize data by interval and Wend column (factor with "weekend" and "weekday" values)
+isteps <- ddply(activity_backfill, .(interval,Wend), summarize, msteps=mean(steps,na.rm=TRUE));
+
+#Plot time series
+qplot(interval,msteps,data=isteps,facets= Wend~.,
+      geom=c("line"),
+      main="Comparison of mean steps by interval for Weekend and weekdays",
+      ylab="Avg number of steps by interval");
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+
+
