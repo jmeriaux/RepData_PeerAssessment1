@@ -1,7 +1,10 @@
 # Reproducible Research: Peer Assessment 1
 
 
-## Loading and preprocessing the data, including dependent packages
+## Loading and preprocessing the data
+  
+This also includes loading dependent packages.
+  
 
 ```r
 library(ggplot2);
@@ -37,17 +40,19 @@ The median when ignoring NA records  is 10765
 #Summarize data
 isteps <- ddply(activity_wtna, .(interval), summarize, msteps=mean(steps,na.rm=TRUE));
 #Plot time series
-plot(isteps$interval,isteps$msteps,type="l",xlab="Interval",ylab="Steps",main="Steps by interval");
+plot(isteps$interval,isteps$msteps,type="l",xlab="Interval",ylab="Steps",main="Average number of steps by interval");
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
 
 ```r
 #Interval with the max avg steps across all days
-minterval <- isteps[isteps$msteps == max(isteps$msteps,na.rm=TRUE),];
+minterval <- isteps[isteps$msteps == max(isteps$msteps,na.rm=TRUE),]$interval;
+maxmsteps <- format(isteps[isteps$interval == minterval,]$msteps,digit=5);
 ```
 
-The maximum interval is `r minterval'.
+The maximum interval is 835  with 206.17 steps.  
+
 
 ## Imputing missing values
 
